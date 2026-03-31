@@ -13,5 +13,4 @@ source "$SCRIPT_DIR/lib/services.sh"
 source "$SCRIPT_DIR/lib/qemu-common.sh"
 source "$SCRIPT_DIR/lib/swtpm.sh"
 source "$VM_CONF"
-trap cleanup EXIT
 
