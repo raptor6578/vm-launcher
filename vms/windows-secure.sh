@@ -54,6 +54,118 @@ for dev in "${USB_PASSTHROUGH_DEVICES[@]}"; do
 done
 
 ################################################################################
+# CPU Arguments / Nested virtualization / Anti-VM detection
+# ⚠️ Ne pas modifier sans retester nested hypervisors
+################################################################################
+
+CPU=(
+  ############################################
+  # Utilise exactement le CPU physique du host
+  # → meilleures performances possibles
+  # → expose toutes les features CPU au guest
+  # → recommandé pour GPU passthrough + gaming
+  ############################################
+  "host"
+
+  ############################################
+  # Active SVM (AMD virtualization)
+  # → nécessaire pour nested hypervisor dans Windows
+  # → requis pour Hyper-V / anti-cheat utilisant virtualization
+  ############################################
+  "svm=on"
+
+  ############################################
+  # Cache la présence de KVM au guest
+  # → important pour anti-VM detection
+  # → certains anti-cheat / DRM détectent "KVM"
+  # → réduit aussi certains comportements spécifiques KVM
+  ############################################
+  "kvm=off"
+
+  ############################################
+  # Hyper-V Enlightenment : relaxed timing
+  # → réduit les VM exits liés aux timers watchdog
+  # → améliore stabilité Windows guest
+  ############################################
+  "hv_relaxed"
+
+  ############################################
+  # Virtual APIC Hyper-V
+  # → réduit les VM exits pour interruptions CPU
+  # → améliore latence CPU / scheduling
+  # → important pour gaming
+  ############################################
+  "hv_vapic"
+
+  ############################################
+  # Spinlock Hyper-V
+  # → évite que Windows boucle trop longtemps sur locks CPU
+  # → 0xffffffff = spin longtemps (moins de VM exits)
+  # → parfois mieux pour nested hypervisor
+  # → peut être testé avec 0x0fff pour réduire latence
+  ############################################
+  "hv_spinlocks=0xffffffff"
+
+  ############################################
+  # Virtual Processor Index
+  # → permet à Windows de mieux gérer multi-core
+  # → réduit overhead SMP
+  # → recommandé pour VM gaming multi-core
+  ############################################
+  "hv_vpindex"
+
+  ############################################
+  # Runtime reporting Hyper-V
+  # → permet à Windows d’optimiser scheduler
+  # → améliore distribution CPU
+  ############################################
+  "hv_runtime"
+
+  ############################################
+  # Synthetic Interrupt Controller
+  # → nécessaire pour timers Hyper-V modernes
+  # → important pour nested hypervisor
+  # → améliore latence globale
+  ############################################
+  "hv_synic"
+
+  ############################################
+  # Synthetic timers Hyper-V
+  # → évite fallback HPET (lent)
+  # → très important pour latence gaming
+  # → souvent gros gain
+  ############################################
+  "hv_stimer"
+
+  ############################################
+  # CPU frequency reporting
+  # → permet à Windows de voir fréquence CPU correcte
+  # → améliore scheduler Windows
+  # → évite mauvais scaling CPU
+  ############################################
+  "hv_frequencies"
+
+  ############################################
+  # Hyper-V time source
+  # → améliore précision timers
+  # → réduit jitter frametime
+  # → important pour jeux sensibles
+  ############################################
+  "hv_time"
+
+  ############################################
+  # AVIC (AMD Virtual Interrupt Controller)
+  # → réduit VM exits pour interrupts
+  # → peut réduire latence input
+  # → parfois gain important sur Ryzen
+  # → parfois micro-stutter selon CPU
+  ############################################
+  "hv_avic"
+)
+
+CPU_ARGS=$(IFS=, ; echo "${CPU[*]}")
+
+################################################################################
 # QEMU - Arguments
 ################################################################################
 
@@ -86,11 +198,10 @@ QEMU_ARGS=(
     -smbios "type=1,manufacturer=ASUS,product=ROG-STRIX-Z790-E-GAMING,version=1.0,serial=123456789"
 
     ############################################
-    # CPU / Nested virtualization / Anti-VM detection
-    # ⚠️ Ne pas modifier sans retester nested hypervisors
+    # CPU
     ############################################
     -smp "$THREADS"
-    -cpu "host,svm=on,kvm=off,hv_relaxed,hv_vapic,hv_spinlocks=0xffffffff,hv_vpindex,hv_runtime,hv_synic,hv_stimer,hv_frequencies,hv_time,hv_avic"
+    -cpu "$CPU"
 
     ############################################
     # ACPI tweaks (stabilité passthrough GPU / USB)
