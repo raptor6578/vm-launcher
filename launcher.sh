@@ -4,8 +4,8 @@ echo
 echo "======================================"
 echo "        VM Selection"
 echo "======================================"
-echo "1) Secure Windows VM"
-echo "2) Unsecure Windows VM"
+echo "1) Windows gaming secure"
+echo "2) Windows gaming unsecure"
 echo
 
 while true; do
@@ -13,8 +13,8 @@ while true; do
     choice=${choice:-1}
 
     case "$choice" in
-        1) vm="windows-secure"; break ;;
-        2) vm="windows-unsecure"; break ;;
+        1) vm="windows-gaming-secure"; break ;;
+        2) vm="windows-gaming-unsecure"; break ;;
         *) echo "Invalid choice" ;;
     esac
 done
